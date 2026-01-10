@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cocktail Master | 調酒大師測驗</title>
+    <link rel="stylesheet" href="src/styles/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;700&family=Orbitron:wght@400;700&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Landing Screen -->
+        <section id="landing-screen" class="screen active">
+            <h1 class="logo glow-text">COCKTAIL<br>MASTER</h1>
+            <p class="subtitle">你準備好進入吧台了嗎？</p>
+
+            <div class="menu-buttons">
+                <button id="start-btn" class="btn primary-btn glow-box">開始值班 (Start Shift)</button>
+                <button id="study-btn" class="btn secondary-btn">職前訓練 (Study Mode)</button>
+            </div>
+
+            <footer class="footer">
+                <p>Gamified Mixology Quiz</p>
+            </footer>
+        </section>
+
+        <!-- Study Screen -->
+        <section id="study-screen" class="screen">
+            <header class="screen-header">
+                <h2>職前訓練</h2>
+                <button id="study-back-btn" class="btn icon-btn">✕</button>
+            </header>
+            <div class="study-content scroll-container">
+                <!-- Content will be injected by JS -->
+                <div class="study-card">
+                    <h3>六大基酒 (The Six Base Spirits)</h3>
+                    <p>調酒的靈魂。大部分雞尾酒都以這六種烈酒為基底：</p>
+                    <ul>
+                        <li><strong>Vodka (伏特加)</strong>: 無色無味，最純淨的基酒。</li>
+                        <li><strong>Gin (琴酒)</strong>: 帶有杜松子與藥草香氣。</li>
+                        <li><strong>Rum (蘭姆酒)</strong>: 甘蔗釀造，有熱帶氣息。</li>
+                        <li><strong>Tequila (龍舌蘭)</strong>: 墨西哥特產，獨特草本味。</li>
+                        <li><strong>Whisky (威士忌)</strong>: 穀物釀造，桶陳木質香。</li>
+                        <li><strong>Brandy (白蘭地)</strong>: 水果(葡萄)蒸餾酒，優雅醇厚。</li>
+                    </ul>
+                </div>
+                <!-- More dynamic content can be added here -->
+            </div>
+        </section>
+
+        <!-- Quiz Screen -->
+        <section id="quiz-screen" class="screen">
+            <header class="quiz-header">
+                <div class="score-board">
+                    <span>Score: <span id="score-display">0</span></span>
+                </div>
+                <div class="timer-bar">
+                    <div id="timer-fill" class="timer-fill"></div>
+                </div>
+                <div class="lives-display" id="lives-display">
+                    <!-- Shaker icons injected here -->
+                </div>
+            </header>
+
+            <div class="question-container">
+                <div id="question-text" class="question-text">
+                    題目載入中...
+                </div>
+                <div id="options-container" class="options-grid">
+                    <!-- Options injected here -->
+                </div>
+            </div>
+
+            <div id="feedback-overlay" class="feedback-overlay hidden">
+                <div class="feedback-content">
+                    <h3 id="feedback-title">Correct!</h3>
+                    <p id="feedback-text">Explanation goes here.</p>
+                    <button id="next-question-btn" class="btn">下一題</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Results Screen -->
+        <section id="result-screen" class="screen">
+            <div class="result-content">
+                <h2 class="glow-text">SHIFT OVER</h2>
+                <div class="final-score">
+                    <span class="label">Final Score</span>
+                    <span id="final-score-value" class="value">0</span>
+                </div>
+                <div class="rank-badge" id="rank-badge">
+                    BARBACK
+                </div>
+
+                <div class="action-buttons">
+                    <button id="view-notes-btn" class="btn secondary-btn">查看錯題筆記</button>
+                    <button id="restart-btn" class="btn primary-btn glow-box">再次挑戰</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Notes Screen (Overlay or Separate) -->
+        <section id="notes-screen" class="screen">
+            <header class="screen-header">
+                <h2>錯題筆記</h2>
+                <button id="notes-back-btn" class="btn icon-btn">✕</button>
+            </header>
+            <div id="notes-list" class="notes-list scroll-container">
+                <!-- Notes injected here -->
+            </div>
+        </section>
+
+    </div>
+
+    <!-- Scripts -->
+    <script type="module" src="src/app.js"></script>
+</body>
+
+</html>
