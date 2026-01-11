@@ -12,4 +12,11 @@ const SUPABASE_KEY = 'sb_publishable_op-TsCJ1idRNC1sCstS9Lw_lAz61C2V';
 // Note: In a production environment, you should use environment variables.
 // Since this is a client-side public key, it's safe to be in the code as per Supabase's design.
 
-export const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+// Safe initialization to ensure the library is loaded
+export const supabase = (function () {
+  if (!window.supabase) {
+    console.error("Supabase CDN library not loaded! Check your network or index.html.");
+    return null;
+  }
+  return window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+})();
