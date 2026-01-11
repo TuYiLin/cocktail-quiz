@@ -256,7 +256,7 @@ async function showDashboard() {
     // Fetch Global Leaderboard
     const { data: leaderboard } = await supabase
         .from('user_profiles')
-        .select('highest_score, id')
+        .select('highest_score, id, display_name')
         .order('highest_score', { ascending: false })
         .limit(5);
 
@@ -266,6 +266,7 @@ async function showDashboard() {
     if (leaderboard) {
         leaderboard.forEach((item, index) => {
             const isMe = item.id === user.id;
+            const displayName = item.display_name || '匿名大師';
             const div = document.createElement('div');
             div.className = 'history-item';
             if (isMe) div.style.border = '1px solid var(--primary-color)';
@@ -273,7 +274,7 @@ async function showDashboard() {
             div.innerHTML = `
                 <div class="history-info">
                     <span class="history-score">TOP ${index + 1}: ${item.highest_score} PTS</span>
-                    <span class="history-date">${isMe ? '(你)' : '匿名大師'}</span>
+                    <span class="history-date">${isMe ? displayName + ' (你)' : displayName}</span>
                 </div>
             `;
             leaderboardList.appendChild(div);
