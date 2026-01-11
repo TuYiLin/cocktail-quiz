@@ -6,7 +6,9 @@ const screens = {
     study: document.getElementById('study-screen'),
     quiz: document.getElementById('quiz-screen'),
     result: document.getElementById('result-screen'),
-    notes: document.getElementById('notes-screen')
+    notes: document.getElementById('notes-screen'),
+    auth: document.getElementById('auth-screen'),
+    dashboard: document.getElementById('dashboard-screen')
 };
 
 const buttons = {
@@ -15,7 +17,15 @@ const buttons = {
     studyBack: document.getElementById('study-back-btn'),
     restart: document.getElementById('restart-btn'),
     viewNotes: document.getElementById('view-notes-btn'),
-    notesBack: document.getElementById('notes-back-btn')
+    notesBack: document.getElementById('notes-back-btn'),
+    auth: document.getElementById('auth-btn'),
+    authBack: document.getElementById('auth-back-btn'),
+    loginConfirm: document.getElementById('login-confirm-btn'),
+    signupConfirm: document.getElementById('signup-confirm-btn'),
+    logout: document.getElementById('logout-btn'),
+    dashboard: document.getElementById('dashboard-btn'),
+    dashboardBack: document.getElementById('dashboard-back-btn'),
+    resultDashboard: document.getElementById('result-dashboard-btn')
 };
 
 // State
@@ -38,6 +48,34 @@ function showScreen(screenName) {
     target.classList.add('active');
 }
 
+// Supabase Integration
+import { supabase } from './supabase-config.js';
+
+async function updateAuthUI(user) {
+    const userInfoDiv = document.getElementById('user-info');
+    const authBtn = buttons.auth;
+    const userNameDisplay = document.getElementById('user-name-display');
+
+    if (user) {
+        userInfoDiv.classList.remove('hidden');
+        authBtn.classList.add('hidden');
+        buttons.dashboard.classList.remove('hidden');
+
+        // Fetch display name from profile
+        const { data: profile } = await supabase
+            .from('user_profiles')
+            .select('display_name')
+            .eq('id', user.id)
+            .maybeSingle();
+
+        userNameDisplay.textContent = profile?.display_name || user.email.split('@')[0];
+    } else {
+        userInfoDiv.classList.add('hidden');
+        authBtn.classList.remove('hidden');
+        buttons.dashboard.classList.add('hidden');
+    }
+}
+
 // Initial Setup
 function init() {
     // Ensure landing is visible
@@ -50,6 +88,197 @@ function init() {
     buttons.restart.addEventListener('click', startQuiz);
     buttons.viewNotes.addEventListener('click', showNotes);
     buttons.notesBack.addEventListener('click', () => showScreen('result'));
+
+    // Auth Listeners
+    buttons.auth.addEventListener('click', () => {
+        document.getElementById('auth-error').classList.add('hidden');
+        showScreen('auth');
+    });
+    buttons.authBack.addEventListener('click', () => showScreen('landing'));
+
+    buttons.loginConfirm.addEventListener('click', handleLogin);
+    buttons.signupConfirm.addEventListener('click', handleSignup);
+    buttons.logout.addEventListener('click', handleLogout);
+    buttons.dashboard.addEventListener('click', showDashboard);
+    buttons.resultDashboard.addEventListener('click', showDashboard);
+    buttons.dashboardBack.addEventListener('click', () => showScreen('landing'));
+
+    // Initial Auth Check
+    supabase.auth.onAuthStateChange((event, session) => {
+        updateAuthUI(session?.user ?? null);
+    });
+}
+
+async function handleLogin() {
+    const email = document.getElementById('auth-email').value;
+    const password = document.getElementById('auth-password').value;
+    const errorEl = document.getElementById('auth-error');
+
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+    if (error) {
+        errorEl.textContent = error.message;
+        errorEl.classList.remove('hidden');
+    } else {
+        showScreen('landing');
+    }
+}
+
+async function handleSignup() {
+    const nickname = document.getElementById('auth-nickname').value;
+    const email = document.getElementById('auth-email').value;
+    const password = document.getElementById('auth-password').value;
+    const errorEl = document.getElementById('auth-error');
+
+    if (!nickname) {
+        errorEl.textContent = "請輸入暱稱";
+        errorEl.classList.remove('hidden');
+        return;
+    }
+
+    const { error, data } = await supabase.auth.signUp({ email, password });
+
+    if (error) {
+        errorEl.textContent = error.message;
+        errorEl.classList.remove('hidden');
+    } else if (data.user) {
+        // Create profile with nickname
+        await supabase
+            .from('user_profiles')
+            .upsert({ id: data.user.id, display_name: nickname }, { onConflict: 'id' });
+
+        alert('註冊成功！歡迎加入吧台！');
+        showScreen('landing');
+    }
+}
+
+async function handleLogout() {
+    await supabase.auth.signOut();
+}
+
+async function showDashboard() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+        alert('請先登入，即可查看個人數據與全球排行榜！');
+        showScreen('auth');
+        return;
+    }
+
+    showScreen('dashboard');
+
+    // Fetch Profile
+    let { data: profile, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('id', user.id)
+        .maybeSingle();
+
+    if (profileError) console.error("Profile fetch error:", profileError);
+
+    const displayName = profile?.display_name || user.email.split('@')[0];
+    document.getElementById('dashboard-user-name').textContent = displayName;
+
+    // If profile doesn't exist yet, create it and use the created data
+    if (!profile) {
+        const { data: newProfile, error: insertError } = await supabase
+            .from('user_profiles')
+            .upsert({ id: user.id }, { onConflict: 'id' })
+            .select()
+            .single();
+        profile = newProfile;
+    }
+
+    if (profile) {
+        let displayScore = profile.highest_score || 0;
+        let displayStreak = profile.current_streak || 0;
+
+        // 【自動校正邏輯】如果檔案中最高分為 0，但其實有歷史紀錄，則自動補推
+        if (displayScore === 0) {
+            const { data: maxRecord } = await supabase
+                .from('quiz_results')
+                .select('score')
+                .eq('user_id', user.id)
+                .order('score', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+
+            if (maxRecord && maxRecord.score > 0) {
+                displayScore = maxRecord.score;
+                // 更新回資料庫，並補齊基本的 display_name 以免下次報錯
+                await supabase.from('user_profiles').update({
+                    highest_score: displayScore,
+                    display_name: user.email.split('@')[0]
+                }).eq('id', user.id);
+            }
+        }
+
+        document.getElementById('best-score-display').textContent = displayScore;
+        document.getElementById('streak-display').textContent = displayStreak;
+    }
+
+    // Fetch History
+    const { data: history } = await supabase
+        .from('quiz_results')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+    const historyList = document.getElementById('history-list');
+    historyList.innerHTML = '';
+
+    if (history && history.length > 0) {
+        history.forEach(item => {
+            const dateTime = new Date(item.created_at).toLocaleString('zh-TW', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            });
+            const div = document.createElement('div');
+            div.className = 'history-item';
+            div.innerHTML = `
+                <div class="history-info">
+                    <span class="history-score">${item.score} PTS</span>
+                    <span class="history-date">${dateTime}</span>
+                </div>
+                <span class="history-rank">${getRank(item.score)}</span>
+            `;
+            historyList.appendChild(div);
+        });
+    } else {
+        historyList.innerHTML = '<p class="auth-desc" style="text-align:center; opacity:0.5;">尚無出勤紀錄</p>';
+    }
+
+    // Fetch Global Leaderboard
+    const { data: leaderboard } = await supabase
+        .from('user_profiles')
+        .select('highest_score, id')
+        .order('highest_score', { ascending: false })
+        .limit(5);
+
+    const leaderboardList = document.getElementById('leaderboard-list');
+    leaderboardList.innerHTML = '';
+
+    if (leaderboard) {
+        leaderboard.forEach((item, index) => {
+            const isMe = item.id === user.id;
+            const div = document.createElement('div');
+            div.className = 'history-item';
+            if (isMe) div.style.border = '1px solid var(--primary-color)';
+
+            div.innerHTML = `
+                <div class="history-info">
+                    <span class="history-score">TOP ${index + 1}: ${item.highest_score} PTS</span>
+                    <span class="history-date">${isMe ? '(你)' : '匿名大師'}</span>
+                </div>
+            `;
+            leaderboardList.appendChild(div);
+        });
+    }
 }
 
 

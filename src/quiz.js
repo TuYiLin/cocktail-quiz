@@ -1,3 +1,5 @@
+import { supabase } from './supabase-config.js';
+
 export class QuizGame {
     constructor(allQuestions, onEndCallback) {
         this.allQuestions = allQuestions;
@@ -17,6 +19,7 @@ export class QuizGame {
         this.timer = null;
         this.timeLeft = this.maxTime;
         this.history = []; // { question, isCorrect, userChoiceText, correctChoiceText }
+        this.isEnded = false;
 
         // DOM Binding
         this.ui = {
@@ -40,6 +43,7 @@ export class QuizGame {
         this.lives = this.maxLives;
         this.currentIndex = 0;
         this.history = [];
+        this.isEnded = false;
 
         // Randomize and Pick Questions
         this.currentQuestions = [...this.allQuestions]
@@ -173,11 +177,75 @@ export class QuizGame {
         this.loadQuestion();
     }
 
-    endGame() {
-        this.onEnd({
+    async endGame() {
+        if (this.isEnded) return;
+        this.isEnded = true;
+
+        const gameData = {
             score: this.score,
             totalQuestions: this.currentIndex,
             history: this.history
-        });
+        };
+
+        // Save to Supabase if user is logged in
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+            try {
+                // 1. Save Quiz Result
+                await supabase
+                    .from('quiz_results')
+                    .insert([
+                        {
+                            user_id: user.id,
+                            score: this.score,
+                            questions_count: this.currentIndex,
+                            wrong_answers: this.history.filter(h => !h.isCorrect).map(h => ({
+                                question_id: h.question.id || h.question.question,
+                                user_choice: h.userChoiceText,
+                                correct_choice: h.correctChoiceText
+                            }))
+                        }
+                    ]);
+
+                // 2. Update Profile & Streak
+                const { data: profile } = await supabase
+                    .from('user_profiles')
+                    .select('*')
+                    .eq('id', user.id)
+                    .maybeSingle();
+
+                let newStreak = 0;
+                let newBest = this.score;
+
+                if (profile) {
+                    // Logic: Score >= 1200 (Head Bartender) increments streak
+                    newStreak = this.score >= 1200 ? (profile.current_streak + 1) : 0;
+                    newBest = Math.max(profile.highest_score, this.score);
+
+                    await supabase
+                        .from('user_profiles')
+                        .update({
+                            current_streak: newStreak,
+                            highest_score: newBest
+                        })
+                        .eq('id', user.id);
+                } else {
+                    // First time profile creation
+                    newStreak = this.score >= 1200 ? 1 : 0;
+                    await supabase
+                        .from('user_profiles')
+                        .insert([{
+                            id: user.id,
+                            current_streak: newStreak,
+                            highest_score: this.score
+                        }]);
+                }
+
+            } catch (err) {
+                console.error("Failed to update Supabase data:", err);
+            }
+        }
+
+        this.onEnd(gameData);
     }
 }

@@ -11,6 +11,8 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;700&family=Orbitron:wght@400;700&display=swap"
         rel="stylesheet">
+    <!-- Supabase JS Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 
 <body>
@@ -20,14 +22,41 @@
             <h1 class="logo glow-text">COCKTAIL<br>MASTER</h1>
             <p class="subtitle">你準備好進入吧台了嗎？</p>
 
-            <div class="menu-buttons">
-                <button id="start-btn" class="btn primary-btn glow-box">開始值班 (Start Shift)</button>
-                <button id="study-btn" class="btn secondary-btn">職前訓練 (Study Mode)</button>
+            <div class="action-buttons">
+                <button id="start-btn" class="btn primary-btn glow-box">開始值班 (START SHIFT)</button>
+                <button id="study-btn" class="btn secondary-btn">職前訓練 (STUDY MODE)</button>
+
+                <!-- Auth-dependent buttons -->
+                <button id="dashboard-btn" class="btn tertiary-btn hidden">查看個人數據看板</button>
+                <button id="auth-btn" class="btn primary-btn">特約調酒師登入</button>
             </div>
 
-            <footer class="footer">
-                <p>Gamified Mixology Quiz</p>
-            </footer>
+            <div id="user-info" class="user-info hidden">
+                <p>歡迎回來, <span id="user-name-display">Bartender</span>!</p>
+                <button id="logout-btn" class="btn secondary-btn"
+                    style="width: auto; padding: 0.5rem 1.5rem; margin-top: 0.5rem; font-size: 0.8rem;">登出身分</button>
+            </div>
+        </section>
+
+        <!-- Auth Screen (Modal) -->
+        <section id="auth-screen" class="screen">
+            <header class="screen-header">
+                <h2 id="auth-title">特約調酒師登入</h2>
+                <button id="auth-back-btn" class="btn icon-btn">✕</button>
+            </header>
+            <div class="auth-container">
+                <div class="auth-box">
+                    <p class="auth-desc">登入以儲存你的調酒紀錄與分析數據</p>
+                    <input type="text" id="auth-nickname" placeholder="暱稱 (Nickname) - 僅註冊時需要" class="auth-input">
+                    <input type="email" id="auth-email" placeholder="電子郵件 (Email)" class="auth-input">
+                    <input type="password" id="auth-password" placeholder="密碼 (Password)" class="auth-input">
+                    <div class="auth-actions">
+                        <button id="login-confirm-btn" class="btn primary-btn">確認登入</button>
+                        <button id="signup-confirm-btn" class="btn secondary-btn">註冊新身分</button>
+                    </div>
+                    <p id="auth-error" class="error-text hidden"></p>
+                </div>
+            </div>
         </section>
 
         <!-- Study Screen -->
@@ -37,20 +66,134 @@
                 <button id="study-back-btn" class="btn icon-btn">✕</button>
             </header>
             <div class="study-content scroll-container">
-                <!-- Content will be injected by JS -->
+                <!-- Section 1: The Bases -->
                 <div class="study-card">
-                    <h3>六大基酒 (The Six Base Spirits)</h3>
-                    <p>調酒的靈魂。大部分雞尾酒都以這六種烈酒為基底：</p>
-                    <ul>
-                        <li><strong>Vodka (伏特加)</strong>: 無色無味，最純淨的基酒。</li>
-                        <li><strong>Gin (琴酒)</strong>: 帶有杜松子與藥草香氣。</li>
-                        <li><strong>Rum (蘭姆酒)</strong>: 甘蔗釀造，有熱帶氣息。</li>
-                        <li><strong>Tequila (龍舌蘭)</strong>: 墨西哥特產，獨特草本味。</li>
-                        <li><strong>Whisky (威士忌)</strong>: 穀物釀造，桶陳木質香。</li>
-                        <li><strong>Brandy (白蘭地)</strong>: 水果(葡萄)蒸餾酒，優雅醇厚。</li>
+                    <h3>🍸 六大基酒 (The Six Bases)</h3>
+                    <p>掌握基酒的特性是破解「反向配方題」的關鍵：</p>
+                    <ul class="study-list">
+                        <li><strong>Vodka (伏特加)</strong>: 無色無味，最純淨。常用於 <em>Moscow Mule</em> (銅杯), <em>Screwdriver</em>,
+                            <em>Cosmopolitan</em>。</li>
+                        <li><strong>Gin (琴酒)</strong>: 杜松子中心。靈魂伴侶是 <em>Martini</em>, <em>Negroni</em>, <em>Gin
+                                Fizz</em>。</li>
+                        <li><strong>Rum (蘭姆酒)</strong>: 甘蔗之魂。熱帶之王如 <em>Mojito</em> (薄荷), <em>Mai Tai</em>,
+                            <em>Daiquiri</em>。</li>
+                        <li><strong>Tequila (龍舌蘭)</strong>: 仙人掌草本味。代表作 <em>Margarita</em> (鹽口杯), <em>Paloma</em> (葡萄柚)。
+                        </li>
+                        <li><strong>Whisky (威士忌)</strong>: 煙燻木質。經典 <em>Old Fashioned</em> (始祖), <em>Manhattan</em> (之后)。
+                        </li>
+                        <li><strong>Brandy (白蘭地)</strong>: 葡萄優雅。必學 <em>Sidecar</em>, <em>Stinger</em> (餐後薄荷)。</li>
                     </ul>
                 </div>
-                <!-- More dynamic content can be added here -->
+
+                <!-- Section 2: Classics Table -->
+                <div class="study-card">
+                    <h3>🧪 經典配方大補帖 (The Recipe Book)</h3>
+                    <div class="formula"><strong>經典酸甜系 (Sours) 2:1:1 結構</strong></div>
+                    <table class="study-table">
+                        <thead>
+                            <tr>
+                                <th>酒名</th>
+                                <th>基酒</th>
+                                <th>特徵材料</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Daiquiri</strong></td>
+                                <td>蘭姆酒</td>
+                                <td>萊姆、糖</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Gimlet</strong></td>
+                                <td>琴酒</td>
+                                <td>萊姆汁</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Sidecar</strong></td>
+                                <td>白蘭地</td>
+                                <td>橙酒、檸檬</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Margarita</strong></td>
+                                <td>龍舌蘭</td>
+                                <td>橙酒、萊姆、鹽</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Jack Rose</strong></td>
+                                <td>蘋果白蘭地</td>
+                                <td>紅石榴、檸檬</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Section 3: Spirit Forward -->
+                <div class="study-card">
+                    <h3>🎨 烈酒直調系 (Spirit Forward)</h3>
+                    <table class="study-table">
+                        <thead>
+                            <tr>
+                                <th>酒名</th>
+                                <th>組成項目</th>
+                                <th>大師筆記</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Martini</strong></td>
+                                <td>琴酒 + 乾苦艾酒</td>
+                                <td>加橄欖水叫 <em>Dirty</em></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Manhattan</strong></td>
+                                <td>威士忌 + 甜苦艾酒</td>
+                                <td>蘇格蘭版叫 <em>Rob Roy</em></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Negroni</strong></td>
+                                <td>琴酒 + 甜苦艾 + 金巴利</td>
+                                <td>比例 1:1:1</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Old Fashioned</strong></td>
+                                <td>威士忌 + 糖 + 苦精</td>
+                                <td>雞尾酒的始祖</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Sazerac</strong></td>
+                                <td>裸麥威士忌 + 艾碧斯</td>
+                                <td>噴灑艾碧斯香氣</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Section 4: Tropical & Others -->
+                <div class="study-card">
+                    <h3>🌴 熱帶風情與特調 (Exotic & Special)</h3>
+                    <ul class="study-list">
+                        <li><strong>Moscow Mule</strong>: 伏特加 + 薑汁啤酒 + <strong>銅杯</strong>。</li>
+                        <li><strong>Pina Colada</strong>: 蘭姆酒 + 椰奶 + 鳳梨汁 (颶風杯)。</li>
+                        <li><strong>B-52</strong>: 利用 <strong>比重 (糖分)</strong> 分層的 Shot。</li>
+                        <li><strong>Bloody Mary</strong>: 伏特加 + 番茄汁 + 辣醬 (鹹鮮味)。</li>
+                        <li><strong>Espresso Martini</strong>: 伏特加 + 濃縮咖啡 (提神且喝醉)。</li>
+                    </ul>
+                </div>
+
+                <!-- Section 5: Terminology -->
+                <div class="study-card">
+                    <h3>🏆 專業術語 (Terminology)</h3>
+                    <div class="formula"><strong>考前必看</strong></div>
+                    <ul class="study-list">
+                        <li><strong>Abv / Proof</strong>: 證明與體積酒精度 (美國制 <em>Proof = 2 * Abv</em>)。</li>
+                        <li><strong>Dash</strong>: 苦精的單位（幾滴、一噴）。</li>
+                        <li><strong>Jigger</strong>: 量酒器。</li>
+                        <li><strong>Float</strong>: 漂浮法（如 <em>New York Sour</em> 頂部的紅酒）。</li>
+                        <li><strong>Straight Up</strong>: 冰鎮後濾掉冰塊倒入高腳杯。</li>
+                        <li><strong>Neat</strong>: 常溫純飲。</li>
+                        <li><strong>Fat-Washing</strong>: 利用油脂（如培根油）萃取風味。</li>
+                    </ul>
+                </div>
             </div>
         </section>
 
@@ -100,6 +243,7 @@
 
                 <div class="action-buttons">
                     <button id="view-notes-btn" class="btn secondary-btn">查看錯題筆記</button>
+                    <button id="result-dashboard-btn" class="btn tertiary-btn">查看個人數據看板</button>
                     <button id="restart-btn" class="btn primary-btn glow-box">再次挑戰</button>
                 </div>
             </div>
@@ -113,6 +257,40 @@
             </header>
             <div id="notes-list" class="notes-list scroll-container">
                 <!-- Notes injected here -->
+            </div>
+        </section>
+
+        <!-- Dashboard Screen -->
+        <section id="dashboard-screen" class="screen">
+            <header class="screen-header">
+                <div>
+                    <h2>個人數據看板</h2>
+                    <p class="auth-desc" style="margin-top:0.2rem">Bartender: <span id="dashboard-user-name">---</span>
+                    </p>
+                </div>
+                <button id="dashboard-back-btn" class="btn icon-btn">✕</button>
+            </header>
+            <div class="dashboard-content scroll-container">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <span class="stat-label">最高得分</span>
+                        <span id="best-score-display" class="stat-value">0</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-label">首席連勝</span>
+                        <span id="streak-display" class="stat-value">0</span>
+                    </div>
+                </div>
+
+                <h3 class="section-title">最近出勤紀錄</h3>
+                <div id="history-list" class="history-list">
+                    <!-- History items injected here -->
+                </div>
+
+                <h3 class="section-title">全球大師榜 (TOP 5)</h3>
+                <div id="leaderboard-list" class="history-list">
+                    <!-- Leaderboard items injected here -->
+                </div>
             </div>
         </section>
 
