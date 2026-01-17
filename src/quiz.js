@@ -1,21 +1,28 @@
 import { supabase } from './supabase-config.js';
 
 export class QuizGame {
-    constructor(allQuestions, onEndCallback) {
+    constructor(allQuestions, onEndCallback, options = {}) {
         this.allQuestions = allQuestions;
         this.onEnd = onEndCallback;
 
         // Game Config
-        this.maxLives = 3;
+        this.config = {
+            maxLives: options.maxLives ?? 3,
+            enableLives: options.enableLives !== undefined ? options.enableLives : true,
+            enableTimer: options.enableTimer !== undefined ? options.enableTimer : true,
+            timePerQuestion: options.timePerQuestion ?? 15,
+            questionsPerRound: options.questionsPerRound ?? 10,
+            saveToLeaderboard: options.saveToLeaderboard !== undefined ? options.saveToLeaderboard : true
+        };
+
         this.baseScore = 100;
-        this.maxTime = 15; // seconds
-        this.questionsPerRound = 10;
+        this.maxTime = this.config.timePerQuestion;
 
         // State
         this.currentQuestions = [];
         this.currentIndex = 0;
         this.score = 0;
-        this.lives = 3;
+        this.lives = this.config.maxLives;
         this.timer = null;
         this.timeLeft = this.maxTime;
         this.history = []; // { question, isCorrect, userChoiceText, correctChoiceText }
@@ -40,7 +47,7 @@ export class QuizGame {
     start() {
         // Reset State
         this.score = 0;
-        this.lives = this.maxLives;
+        this.lives = this.config.maxLives;
         this.currentIndex = 0;
         this.history = [];
         this.isEnded = false;
@@ -48,7 +55,7 @@ export class QuizGame {
         // Randomize and Pick Questions
         this.currentQuestions = [...this.allQuestions]
             .sort(() => Math.random() - 0.5)
-            .slice(0, this.questionsPerRound);
+            .slice(0, this.config.questionsPerRound);
 
         this.updateStatsUI();
         this.loadQuestion();
@@ -58,16 +65,21 @@ export class QuizGame {
         this.ui.score.textContent = this.score;
         // Lives
         this.ui.livesGrid.innerHTML = '';
-        for (let i = 0; i < this.maxLives; i++) {
-            const icon = document.createElement('span');
-            icon.className = `life-icon ${i < this.lives ? '' : 'lost'}`;
-            icon.textContent = '🍸'; // Shaker or Martini Glass icon
-            this.ui.livesGrid.appendChild(icon);
+        if (this.config.enableLives) {
+            this.ui.livesGrid.style.display = 'flex'; // Restore display
+            for (let i = 0; i < this.config.maxLives; i++) {
+                const icon = document.createElement('span');
+                icon.className = `life-icon ${i < this.lives ? '' : 'lost'}`;
+                icon.textContent = '🍸'; // Shaker or Martini Glass icon
+                this.ui.livesGrid.appendChild(icon);
+            }
+        } else {
+            this.ui.livesGrid.style.display = 'none'; // Hide container
         }
     }
 
     loadQuestion() {
-        if (this.currentIndex >= this.currentQuestions.length || this.lives <= 0) {
+        if (this.currentIndex >= this.currentQuestions.length || (this.config.enableLives && this.lives <= 0)) {
             this.endGame();
             return;
         }
@@ -89,7 +101,16 @@ export class QuizGame {
         });
 
         // Start Timer
-        this.startTimer();
+        // Start Timer
+        if (this.config.enableTimer) {
+            this.ui.timerFill.parentElement.style.display = 'block'; // Ensure visible
+            this.ui.timerFill.parentElement.style.opacity = '1';
+            this.startTimer();
+        } else {
+            this.ui.timerFill.parentElement.style.display = 'none'; // Fully hide
+            this.stopTimer(); // Ensure no background timer
+            this.ui.timerFill.style.width = '100%'; // Full bar for aesthetics if forced
+        }
     }
 
     startTimer() {
@@ -142,11 +163,14 @@ export class QuizGame {
         // Logic
         if (isCorrect) {
             // Speed Bonus: (TimeLeft / MaxTime) * 50
-            const speedBonus = Math.floor((this.timeLeft / this.maxTime) * 50);
+            // If timer disabled, just give constant bonus or 0? 
+            // Let's give full speed bonus for satisfaction if untimed (or 0).
+            // User didn't specify scoring nuances. Let's keep it simple.
+            const speedBonus = this.config.enableTimer ? Math.floor((this.timeLeft / this.maxTime) * 50) : 0;
             this.score += (this.baseScore + speedBonus);
             this.showFeedback(true, "Correct! 調酒正確！", q.explanation);
         } else {
-            this.lives--;
+            if (this.config.enableLives) this.lives--;
             this.showFeedback(false, "Oops! 手滑了...", q.explanation);
         }
 
@@ -187,9 +211,9 @@ export class QuizGame {
             history: this.history
         };
 
-        // Save to Supabase if user is logged in
+        // Save to Supabase if user is logged in AND saveToLeaderboard is true
         const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
+        if (user && this.config.saveToLeaderboard) {
             try {
                 // 1. Save Quiz Result
                 await supabase

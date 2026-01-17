@@ -1,4 +1,5 @@
 import { questions } from './data/questions.js';
+import { skillQuestions } from './data/skill_questions.js';
 
 // DOM Elements
 const screens = {
@@ -8,14 +9,18 @@ const screens = {
     result: document.getElementById('result-screen'),
     notes: document.getElementById('notes-screen'),
     auth: document.getElementById('auth-screen'),
-    dashboard: document.getElementById('dashboard-screen')
+    dashboard: document.getElementById('dashboard-screen'),
+    career: document.getElementById('career-screen')
 };
 
 const buttons = {
-    start: document.getElementById('start-btn'),
+    start: document.getElementById('start-btn'), // Now inside Ranked Card
+    career: document.getElementById('career-btn'), // New Career Button
+    careerBack: document.getElementById('career-back-btn'),
     study: document.getElementById('study-btn'),
     studyBack: document.getElementById('study-back-btn'),
     restart: document.getElementById('restart-btn'),
+    home: document.getElementById('home-btn'), // New Home Button
     viewNotes: document.getElementById('view-notes-btn'),
     notesBack: document.getElementById('notes-back-btn'),
     auth: document.getElementById('auth-btn'),
@@ -28,9 +33,11 @@ const buttons = {
     resultDashboard: document.getElementById('result-dashboard-btn')
 };
 
-// State
-let currentGameState = [];
-let noteHistory = [];
+// Global State
+let gameInstance = null; // Hold the QuizGame instance
+let noteHistory = []; // Hold history for the notes screen
+let currentMode = 'ranked'; // 'ranked' or 'career'
+let currentLevel = 1; // For career mode restart
 
 // Navigation Functions
 function showScreen(screenName) {
@@ -82,12 +89,42 @@ function init() {
     showScreen('landing');
 
     // Event Listeners
-    buttons.start.addEventListener('click', startQuiz);
+    buttons.start.addEventListener('click', () => startQuiz('ranked'));
+    buttons.career.addEventListener('click', () => startQuiz('career'));
+
     buttons.study.addEventListener('click', () => showScreen('study'));
     buttons.studyBack.addEventListener('click', () => showScreen('landing'));
-    buttons.restart.addEventListener('click', startQuiz);
+    buttons.restart.addEventListener('click', () => {
+        if (currentMode === 'career') {
+            startCareerQuiz(currentLevel);
+        } else {
+            startQuiz('ranked');
+        }
+    });
+
+    // Re-fetch to ensure DOM is ready, just in case
+    const homeBtn = document.getElementById('home-btn');
+    if (homeBtn) {
+        homeBtn.addEventListener('click', () => {
+            console.log("Home clicked, going to landing");
+            showScreen('landing');
+        });
+    } else {
+        console.error("Home button not found in DOM!");
+    }
+
+    // buttons.home.addEventListener('click', () => showScreen('landing')); // Commented out old one
     buttons.viewNotes.addEventListener('click', showNotes);
     buttons.notesBack.addEventListener('click', () => showScreen('result'));
+    buttons.careerBack.addEventListener('click', () => showScreen('landing'));
+
+    // Career Nodes
+    [1, 2, 3, 4].forEach(level => {
+        const node = document.getElementById(`level-node-${level}`);
+        if (node) {
+            node.addEventListener('click', () => startCareerQuiz(level));
+        }
+    });
 
     // Auth Listeners
     buttons.auth.addEventListener('click', () => {
@@ -214,6 +251,31 @@ async function showDashboard() {
 
         document.getElementById('best-score-display').textContent = displayScore;
         document.getElementById('streak-display').textContent = displayStreak;
+
+        // Render Career Stats
+        const careerProgress = getCareerProgress();
+        const careerList = document.getElementById('career-stats-list');
+        careerList.innerHTML = '';
+
+        const levelNames = {
+            1: "點酒新手", 2: "風味探索者", 3: "酒吧熟客", 4: "專業預備生"
+        };
+
+        [1, 2, 3, 4].forEach(lvl => {
+            const p = careerProgress[lvl];
+            const div = document.createElement('div');
+            div.className = `career-stat-item ${p.unlocked ? 'unlocked' : ''}`;
+
+            // Build stars string
+            let starStr = '';
+            for (let i = 0; i < 3; i++) starStr += i < p.stars ? '★' : '☆';
+
+            div.innerHTML = `
+                <h4>Level ${lvl}<br><span style="font-size:0.8em; opacity:0.8">${levelNames[lvl]}</span></h4>
+                <div class="stars">${p.unlocked ? starStr : '🔒 Locked'}</div>
+            `;
+            careerList.appendChild(div);
+        });
     }
 
     // Fetch History
@@ -286,9 +348,16 @@ async function showDashboard() {
 // Quiz Logic Imports (We'll implement this next, focusing on structure first)
 import { QuizGame } from './quiz.js';
 
-let gameInstance = null;
 
-function startQuiz() {
+function startQuiz(mode = 'ranked') {
+    if (mode === 'career') {
+        renderCareerMap();
+        showScreen('career');
+        return;
+    }
+
+    currentMode = 'ranked';
+    // Ranked Mode Logic (Original)
     gameInstance = new QuizGame(questions, onGameEnd);
     showScreen('quiz');
     gameInstance.start();
@@ -301,6 +370,10 @@ function onGameEnd(resultData) {
 
     scoreDisplay.textContent = resultData.score;
     rankBadge.textContent = getRank(resultData.score);
+
+    // Reset Button Text for Ranked
+    buttons.restart.textContent = '再次挑戰 (Challenge Again)';
+
     noteHistory = resultData.history.filter(h => !h.isCorrect); // Only keep wrong answers for notes? Or all? User said "Review", let's keep all but highlight wrong.
     // Actually user said "錯題筆記 / 完整題解", implying primarily wrong ones but full review is good.
     // Let's store full history.
@@ -347,4 +420,172 @@ function showNotes() {
 }
 
 // Start App
+
+// Call init AFTER function definitions to avoid issues, though module hosting usually hoists.
+// Check if user has career progress
+function getCareerProgress() {
+    const saved = localStorage.getItem('career_progress');
+    if (saved) return JSON.parse(saved);
+    return {
+        1: { stars: 0, unlocked: true },
+        2: { stars: 0, unlocked: false },
+        3: { stars: 0, unlocked: false },
+        4: { stars: 0, unlocked: false }
+    };
+}
+
+function saveCareerProgress(progress) {
+    localStorage.setItem('career_progress', JSON.stringify(progress));
+}
+
+function renderCareerMap() {
+    const progress = getCareerProgress();
+
+    // Level 1
+    updateLevelNode(1, progress[1]);
+
+    // Check unlocks level 2
+    if (progress[1].stars >= 3) progress[2].unlocked = true;
+    updateLevelNode(2, progress[2]);
+
+    // Check unlocks level 3
+    if (progress[2].stars >= 3) progress[3].unlocked = true;
+    updateLevelNode(3, progress[3]);
+
+    // Check unlocks level 4
+    if (progress[3].stars >= 3) progress[4].unlocked = true;
+    updateLevelNode(4, progress[4]);
+
+    // Save auto-unlocks back to storage just in case
+    saveCareerProgress(progress);
+}
+
+function updateLevelNode(level, status) {
+    const node = document.getElementById(`level-node-${level}`);
+    const starsContainer = document.getElementById(`stars-level-${level}`);
+
+    // Reset classes
+    node.classList.remove('locked', 'unlocked', 'active-node');
+
+    if (status.unlocked) {
+        node.classList.add('unlocked');
+        // Add active-node if it's the highest unlocked or current focus? 
+        // For now, let's pulse the highest unlocked level that isn't fully 3-starred yet.
+        if (status.stars < 3) {
+            node.classList.add('active-node');
+        }
+
+        // Icon update
+        const iconDiv = node.querySelector('.node-icon');
+        // iconDiv.textContent = '🔓'; // Or keep specific icon
+    } else {
+        node.classList.add('locked');
+    }
+
+    // Stars
+    starsContainer.innerHTML = '';
+    for (let i = 0; i < 3; i++) {
+        const star = document.createElement('span');
+        star.className = i < status.stars ? 'star filled' : 'star empty';
+        star.textContent = '★';
+        starsContainer.appendChild(star);
+    }
+}
+
+// Start Career Level logic
+function startCareerQuiz(level) {
+    const progress = getCareerProgress();
+    if (!progress[level].unlocked) {
+        alert("🔒 此關卡尚未解鎖！請先在上一關獲得 3 顆星！");
+        return;
+    }
+
+    // Filter questions
+    const levelQuestions = skillQuestions.filter(q => q.level === level);
+
+    // QuizEngine expects { question, options, correct, explanation }
+    // skillQuestions already matches this format.
+
+    // Pick 10 random
+    if (levelQuestions.length < 10) {
+        console.warn(`Level ${level} has fewer than 10 questions!`);
+    }
+    const shuffled = levelQuestions.sort(() => 0.5 - Math.random()).slice(0, 10);
+
+    // Start Game
+    currentMode = 'career';
+    currentLevel = level;
+    gameInstance = new QuizGame(shuffled, (result) => onCareerGameEnd(result, level), {
+        enableTimer: false,
+        enableLives: false,
+        saveToLeaderboard: false,
+        questionsPerRound: 10
+    });
+    showScreen('quiz');
+    gameInstance.start();
+}
+
+function onCareerGameEnd(result, level) {
+    // Calculate Stars
+    // 10 Qs. 
+    // 3 Stars = 9 or 10 correct (>=90%)
+    // 2 Stars = 8 correct (>=80%)
+    // 1 Star = 6,7 correct (>=60%)
+    const correctCount = result.score / 100; // Assumption: 100 pts per question in existing engine?
+    // Wait, existing engine score logic might be different (combo etc).
+    // Let's check QuizGame result data structure. Usually it passes total questions and score.
+    // If QuizGame uses combo scoring, `score` will be high. I should use `correctCount` if available or infer it.
+    // Let's modify QuizGame or check it. Assuming standard simple quiz for now or count from history.
+
+    const correctAnswers = result.history.filter(h => h.isCorrect).length;
+    let stars = 0;
+
+    // Rating Logic:
+    // 3 Stars: 9-10 correct (Mastery) -> Unlocks next level
+    // 2 Stars: 6-8 correct (Passable)
+    // 1 Star: 0-5 correct (Keep trying)
+    if (correctAnswers >= 9) stars = 3;
+    else if (correctAnswers >= 6) stars = 2;
+    else stars = 1;
+
+    // Save Progress
+    const progress = getCareerProgress();
+    if (stars > progress[level].stars) {
+        progress[level].stars = stars;
+        saveCareerProgress(progress);
+
+        // Check unlock next
+        if (stars === 3 && level < 4) {
+            progress[level + 1].unlocked = true;
+            saveCareerProgress(progress);
+            // Maybe show unlock animation?
+        }
+    }
+
+    // Reuse Result Screen but customize
+    const scoreDisplay = document.getElementById('final-score-value');
+    const rankBadge = document.getElementById('rank-badge');
+
+    scoreDisplay.textContent = `${correctAnswers} / 10`;
+    rankBadge.textContent = `${stars} 星級 (STARS)`;
+
+    // Change Button Text
+    buttons.restart.textContent = '再次訓練 (Train Again)';
+
+    // Update history for notes
+    noteHistory = result.history;
+
+    // Override Restart Button to go back to Career Map instead of Restart Level immediately?
+    // Or just keeping restart is fine.
+
+    // Show
+    showScreen('result');
+
+    // Custom back behavior for Career?
+    // We can add a "Back to Map" button or make "Home" button go to Landing.
+    // Existing Home goes to Landing.
+}
+
+// Initialization calls
 init();
+

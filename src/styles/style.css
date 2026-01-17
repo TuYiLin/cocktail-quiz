@@ -100,8 +100,111 @@ h1.logo {
 .subtitle {
     color: var(--text-muted);
     font-size: 1.2rem;
-    margin-bottom: 3rem;
+    margin-bottom: 2rem;
     text-align: center;
+}
+
+/* Mode Selection UI */
+.mode-selection-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    width: 100%;
+    margin-bottom: 2rem;
+}
+
+.mode-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--card-border);
+    padding: 1.5rem;
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    transition: transform 0.2s, border-color 0.2s, background 0.2s;
+}
+
+.mode-card:hover {
+    transform: translateY(-5px);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+#career-mode-card:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 15px rgba(0, 243, 255, 0.2);
+}
+
+#ranked-mode-card:hover {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 15px rgba(255, 0, 85, 0.2);
+}
+
+.mode-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.mode-card h3 {
+    font-family: var(--font-heading);
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-main);
+}
+
+.mode-card h3 small {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    display: block;
+    margin-top: 0.2rem;
+}
+
+.mode-card p {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 1.5rem;
+    flex-grow: 1;
+    /* Push buttons to bottom */
+}
+
+/* Accent Button for Ranked Mode */
+.accent-btn {
+    background-color: transparent;
+    border: 2px solid var(--accent-color);
+    color: var(--accent-color);
+    box-shadow: 0 0 5px var(--accent-color);
+}
+
+.accent-btn:hover {
+    background-color: var(--accent-color);
+    color: #fff;
+    box-shadow: 0 0 20px var(--accent-color);
+}
+
+.text-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    text-decoration: underline;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+/* Auth Section Adjustment */
+.auth-section {
+    margin-top: auto;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    padding-top: 1rem;
+}
+
+@media (max-width: 600px) {
+    .mode-selection-container {
+        grid-template-columns: 1fr;
+        /* Stack on mobile */
+        gap: 1rem;
+    }
 }
 
 /* Buttons */
@@ -616,4 +719,204 @@ h1.logo {
     border-radius: 4px;
     background: rgba(188, 19, 254, 0.2);
     color: var(--secondary-color);
+}
+
+.subsection-title {
+    margin: 1.5rem 0 0.5rem;
+    font-size: 1rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.career-stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.career-stat-item {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    padding: 1rem;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.career-stat-item.unlocked {
+    border-color: var(--primary-color);
+    background: rgba(0, 243, 255, 0.05);
+}
+
+.career-stat-item h4 {
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-main);
+}
+
+.career-stat-item .stars {
+    color: var(--warning-color);
+    font-size: 1rem;
+}
+
+/* Career Mode (Skill Tree) Styles */
+.career-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    padding-top: 2rem;
+    position: relative;
+    /* Background image could go here */
+}
+
+.roadmap-wrapper {
+    display: flex;
+    flex-direction: column;
+    /* Level 1 at Top now */
+    align-items: center;
+    gap: 3rem;
+    position: relative;
+    width: 100%;
+    max-width: 400px;
+    padding-bottom: 4rem;
+    /* Spacing for bottom node */
+}
+
+/* The vertical connecting line */
+.roadmap-line {
+    position: absolute;
+    top: 2rem;
+    bottom: 2rem;
+    width: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    z-index: 0;
+    box-shadow: 0 0 10px rgba(0, 243, 255, 0.1);
+}
+
+.level-node {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1rem;
+    border-radius: 12px;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    position: relative;
+    z-index: 1;
+    /* Above line */
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+/* Make nodes alternate sides slightly or center them? Let's keep centered for simplicity mobile */
+.level-node {
+    flex-direction: row;
+    justify-content: flex-start;
+}
+
+.level-node.locked {
+    opacity: 0.6;
+    filter: grayscale(1);
+    cursor: not-allowed;
+}
+
+.level-node.unlocked {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 15px rgba(0, 243, 255, 0.1);
+    background: rgba(0, 243, 255, 0.05);
+}
+
+.level-node.active-node {
+    /* The next playable level */
+    animation: pulse-node 2s infinite;
+}
+
+@keyframes pulse-node {
+    0% {
+        box-shadow: 0 0 5px rgba(0, 243, 255, 0.2);
+    }
+
+    50% {
+        box-shadow: 0 0 20px rgba(0, 243, 255, 0.5);
+        border-color: #fff;
+    }
+
+    100% {
+        box-shadow: 0 0 5px rgba(0, 243, 255, 0.2);
+    }
+}
+
+.node-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.5);
+    border: 2px solid var(--card-border);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.8rem;
+    flex-shrink: 0;
+}
+
+.unlocked .node-icon {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 10px var(--primary-color);
+    color: #fff;
+}
+
+.locked .node-icon {
+    border-color: #555;
+    color: #777;
+}
+
+.node-info {
+    flex: 1;
+}
+
+.level-title {
+    font-size: 1.1rem;
+    color: var(--text-main);
+    margin-bottom: 0.5rem;
+    font-family: var(--font-heading);
+}
+
+.locked .level-title {
+    color: var(--text-muted);
+}
+
+.level-title small {
+    font-size: 0.75rem;
+    display: block;
+    color: var(--text-muted);
+    font-family: var(--font-body);
+    font-weight: normal;
+}
+
+.stars-container {
+    display: flex;
+    gap: 0.3rem;
+}
+
+.star {
+    color: #333;
+    /* Empty star color */
+    font-size: 1.2rem;
+    text-shadow: none;
+}
+
+.unlocked .star.empty {
+    color: rgba(255, 255, 255, 0.2);
+}
+
+.star.filled {
+    color: var(--tertiary-color);
+    /* Yellow */
+    text-shadow: 0 0 5px var(--tertiary-color);
 }

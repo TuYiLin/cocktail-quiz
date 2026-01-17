@@ -22,13 +22,32 @@
             <h1 class="logo glow-text">COCKTAIL<br>MASTER</h1>
             <p class="subtitle">你準備好進入吧台了嗎？</p>
 
-            <div class="action-buttons">
-                <button id="start-btn" class="btn primary-btn glow-box">開始值班 (START SHIFT)</button>
-                <button id="study-btn" class="btn secondary-btn">職前訓練 (STUDY MODE)</button>
+            <div class="mode-selection-container">
+                <!-- Career Mode Card -->
+                <div class="mode-card" id="career-mode-card">
+                    <div class="mode-icon">🥃</div>
+                    <h3>職涯模式<br><small>(Career Mode)</small></h3>
+                    <p>循序漸進，從學徒到大師。解鎖新酒譜與技能。</p>
+                    <button id="career-btn" class="btn primary-btn glow-box">進入職涯</button>
+                    <!-- Study button moved here as logical place -->
+                    <button id="study-btn" class="btn secondary-btn" style="margin-top:0.5rem; font-size:0.9rem">圖書館
+                        (Library)</button>
+                </div>
 
-                <!-- Auth-dependent buttons -->
-                <button id="dashboard-btn" class="btn tertiary-btn hidden">查看個人數據看板</button>
-                <button id="auth-btn" class="btn primary-btn">特約調酒師登入</button>
+                <!-- Ranked Mode Card -->
+                <div class="mode-card" id="ranked-mode-card">
+                    <div class="mode-icon">⚔️</div>
+                    <h3>積分競技<br><small>(Ranked Mode)</small></h3>
+                    <p>限時挑戰，與全球玩家比拚分數與連勝。</p>
+                    <button id="start-btn" class="btn accent-btn glow-box-accent">開始排位</button>
+                    <!-- Dashboard button moved here -->
+                    <button id="dashboard-btn" class="btn tertiary-btn hidden"
+                        style="margin-top:0.5rem; font-size:0.9rem">數據看板 (Stats)</button>
+                </div>
+            </div>
+
+            <div class="auth-section">
+                <button id="auth-btn" class="btn text-btn">特約調酒師登入 (Login)</button>
             </div>
 
             <div id="user-info" class="user-info hidden">
@@ -72,11 +91,13 @@
                     <p>掌握基酒的特性是破解「反向配方題」的關鍵：</p>
                     <ul class="study-list">
                         <li><strong>Vodka (伏特加)</strong>: 無色無味，最純淨。常用於 <em>Moscow Mule</em> (銅杯), <em>Screwdriver</em>,
-                            <em>Cosmopolitan</em>。</li>
+                            <em>Cosmopolitan</em>。
+                        </li>
                         <li><strong>Gin (琴酒)</strong>: 杜松子中心。靈魂伴侶是 <em>Martini</em>, <em>Negroni</em>, <em>Gin
                                 Fizz</em>。</li>
                         <li><strong>Rum (蘭姆酒)</strong>: 甘蔗之魂。熱帶之王如 <em>Mojito</em> (薄荷), <em>Mai Tai</em>,
-                            <em>Daiquiri</em>。</li>
+                            <em>Daiquiri</em>。
+                        </li>
                         <li><strong>Tequila (龍舌蘭)</strong>: 仙人掌草本味。代表作 <em>Margarita</em> (鹽口杯), <em>Paloma</em> (葡萄柚)。
                         </li>
                         <li><strong>Whisky (威士忌)</strong>: 煙燻木質。經典 <em>Old Fashioned</em> (始祖), <em>Manhattan</em> (之后)。
@@ -197,6 +218,68 @@
             </div>
         </section>
 
+        <!-- Career Mode Screen (Skill Tree) -->
+        <section id="career-screen" class="screen">
+            <header class="screen-header">
+                <h2>職涯地圖 (My Career)</h2>
+                <button id="career-back-btn" class="btn icon-btn">✕</button>
+            </header>
+            <div class="career-container scroll-container">
+                <div class="roadmap-wrapper">
+                    <!-- Line connector -->
+                    <div class="roadmap-line"></div>
+
+                    <!-- Level 1: Start (Top) -->
+                    <div class="level-node unlocked active-node" id="level-node-1" data-level="1">
+                        <div class="node-icon">🍺</div>
+                        <div class="node-info">
+                            <h3 class="level-title">點酒新手<br><small>(The First Sip)</small></h3>
+                            <div class="stars-container" id="stars-level-1">
+                                <span class="star empty">★</span><span class="star empty">★</span><span
+                                    class="star empty">★</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Level 2 -->
+                    <div class="level-node locked" id="level-node-2" data-level="2">
+                        <div class="node-icon">🔒</div>
+                        <div class="node-info">
+                            <h3 class="level-title">風味探索者<br><small>(Flavor Explorer)</small></h3>
+                            <div class="stars-container" id="stars-level-2">
+                                <span class="star empty">★</span><span class="star empty">★</span><span
+                                    class="star empty">★</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Level 3 -->
+                    <div class="level-node locked" id="level-node-3" data-level="3">
+                        <div class="node-icon">🔒</div>
+                        <div class="node-info">
+                            <h3 class="level-title">酒吧熟客<br><small>(Bar Regular)</small></h3>
+                            <div class="stars-container" id="stars-level-3">
+                                <span class="star empty">★</span><span class="star empty">★</span><span
+                                    class="star empty">★</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Level 4: Master (Bottom) -->
+                    <div class="level-node locked" id="level-node-4" data-level="4">
+                        <div class="node-icon">🔒</div>
+                        <div class="node-info">
+                            <h3 class="level-title">專業預備生<br><small>(Pro Apprentice)</small></h3>
+                            <div class="stars-container" id="stars-level-4">
+                                <span class="star empty">★</span><span class="star empty">★</span><span
+                                    class="star empty">★</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <!-- Quiz Screen -->
         <section id="quiz-screen" class="screen">
             <header class="quiz-header">
@@ -245,6 +328,7 @@
                     <button id="view-notes-btn" class="btn secondary-btn">查看錯題筆記</button>
                     <button id="result-dashboard-btn" class="btn tertiary-btn">查看個人數據看板</button>
                     <button id="restart-btn" class="btn primary-btn glow-box">再次挑戰</button>
+                    <button id="home-btn" class="btn secondary-btn" style="margin-top: 1rem;">回到首頁 (Home)</button>
                 </div>
             </div>
         </section>
@@ -271,25 +355,36 @@
                 <button id="dashboard-back-btn" class="btn icon-btn">✕</button>
             </header>
             <div class="dashboard-content scroll-container">
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <span class="stat-label">最高得分</span>
-                        <span id="best-score-display" class="stat-value">0</span>
-                    </div>
-                    <div class="stat-card">
-                        <span class="stat-label">首席連勝</span>
-                        <span id="streak-display" class="stat-value">0</span>
-                    </div>
+                <!-- Career Section -->
+                <h3 class="section-title">職涯模式 (Career Mode)</h3>
+                <div id="career-stats-list" class="career-stats-grid">
+                    <!-- Career progress injected here -->
+                    <p style="text-align:center; color:var(--text-muted);">載入中...</p>
                 </div>
 
-                <h3 class="section-title">最近出勤紀錄</h3>
-                <div id="history-list" class="history-list">
-                    <!-- History items injected here -->
-                </div>
+                <!-- Ranked Section -->
+                <h3 class="section-title" style="margin-top: 2rem;">積分競技 (Ranked Mode)</h3>
+                <div class="dashboard-section">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <span class="stat-label">最高得分</span>
+                            <span id="best-score-display" class="stat-value">0</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-label">首席連勝</span>
+                            <span id="streak-display" class="stat-value">0</span>
+                        </div>
+                    </div>
 
-                <h3 class="section-title">全球大師榜 (TOP 5)</h3>
-                <div id="leaderboard-list" class="history-list">
-                    <!-- Leaderboard items injected here -->
+                    <h4 class="subsection-title">最近出勤紀錄</h4>
+                    <div id="history-list" class="history-list">
+                        <!-- History items injected here -->
+                    </div>
+
+                    <h4 class="subsection-title">全球大師榜 (TOP 5)</h4>
+                    <div id="leaderboard-list" class="history-list">
+                        <!-- Leaderboard items injected here -->
+                    </div>
                 </div>
             </div>
         </section>
